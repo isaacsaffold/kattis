@@ -21,26 +21,37 @@ int comparePeople(const struct Person* a, const struct Person* b)
     (a) = (b), (b) = SWAP_temp; \
 }
 
+const struct Person* medianOfThree(const struct Person* a, const struct Person* b, const struct Person* c)
+{
+    if (comparePeople(b, a) < 0)
+        SWAP(a, b, const struct Person*);
+    if (comparePeople(c, a) < 0)
+        return a;
+    else if (comparePeople(c, b) < 0)
+        return c;
+    else
+        return b;
+}
+
 void quickSort(const struct Person** people, int numPeople)
 {
-    if (numPeople < 2)
-        return;
-    SWAP(people[0], people[numPeople >> 1], const struct Person*);
-    const struct Person* pivot = people[0];
-    int i = 1, j = numPeople - 1;
-    loopStart:
+    if (numPeople > 1)
     {
-        for (; i < numPeople && comparePeople(people[i], pivot) < 0; ++i);
-        for (; comparePeople(people[j], pivot) > 0; --j);
-        if (i < j)
+        const struct Person* pivot = medianOfThree(people[0], people[numPeople >> 1], people[numPeople - 1]);
+        int i = -1, j = numPeople;
+        loopStart:
         {
-            SWAP(people[i], people[j], const struct Person*);
-            goto loopStart;
+            while (comparePeople(people[++i], pivot) < 0);
+            while (comparePeople(people[--j], pivot) > 0);
+            if (i < j)
+            {
+                SWAP(people[i], people[j], const struct Person*);
+                goto loopStart;
+            }
         }
+        quickSort(people, i);
+        quickSort(people + i, numPeople - i);
     }
-    SWAP(people[0], people[j], const struct Person*);
-    quickSort(people, j);
-    quickSort(people + j + 1, numPeople - j - 1);
 }
 
 int evalTernary(const unsigned char* digits, int numDigits)
