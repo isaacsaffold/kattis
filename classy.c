@@ -21,6 +21,19 @@ int comparePeople(const struct Person* a, const struct Person* b)
     (a) = (b), (b) = SWAP_temp; \
 }
 
+void insertionSort(const struct Person** people, int numPeople)
+{
+    for (int i = 1; i < numPeople; ++i)
+    {
+        int j = i - 1;
+        for (; j >= 0 && comparePeople(people[i], people[j]) < 0; --j);
+        const struct Person* temp = people[i];
+        for (int k = i - 1; k > j; --k)
+            people[k + 1] = people[k];
+        people[j + 1] = temp;
+    }
+}
+
 const struct Person* medianOfThree(const struct Person* a, const struct Person* b, const struct Person* c)
 {
     if (comparePeople(b, a) < 0)
@@ -33,9 +46,15 @@ const struct Person* medianOfThree(const struct Person* a, const struct Person* 
         return b;
 }
 
+#define INSERTION_SORT_MAX_LEN 8
+
 void quickSort(const struct Person** people, int numPeople)
 {
-    if (numPeople > 1)
+    if (numPeople < 2)
+        return;
+    else if (numPeople <= INSERTION_SORT_MAX_LEN)
+        insertionSort(people, numPeople);
+    else
     {
         const struct Person* pivot = medianOfThree(people[0], people[numPeople >> 1], people[numPeople - 1]);
         int i = -1, j = numPeople;
