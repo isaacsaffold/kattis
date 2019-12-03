@@ -7,36 +7,36 @@
 
 using adjlist_t = std::unordered_map<int, std::vector<int>>;
 
-class UnionFind
+class DisjointSets
 {
     private:
         int* m_sets;
-		unsigned char* m_heights;
-        int m_setCount;
+        unsigned char* m_heights;
+        int m_size;
 
     public:
-        UnionFind(int length): m_sets(new int[length]), m_heights(new unsigned char[length]()), m_setCount(length)
+        explicit DisjointSets(int len):
+            m_sets(new int[len]), m_heights(new unsigned char[len]()), m_size(len) {std::iota(m_sets, m_sets + len, 0);}
+
+        ~DisjointSets() {delete[] m_sets, delete[] m_heights;}
+
+        int size() const {return m_size;}
+
+        int findRoot(int index)
         {
-            std::iota(m_sets, m_sets + length, 0);
-        }
-
-        ~UnionFind() {delete[] m_sets, delete[] m_heights;}
-
-        int size() const {return m_setCount;}
-
-        int findRoot(int n)
-        {
-            while (n != m_sets[n])
+            int height = 0;
+            while (index != m_sets[index])
             {
-                m_sets[n] = m_sets[m_sets[n]];
-				n = m_sets[n];
+                index = m_sets[index], m_sets[index] = m_sets[m_sets[index]];
+                ++height;
             }
-            return n;
+            m_heights[index] -= height >> 1;
+            return index;
         }
 
-        bool join(int a, int b)
+        bool joinSets(int indexA, int indexB)
         {
-			int rootA = findRoot(a), rootB = findRoot(b);
+            int rootA = findRoot(indexA), rootB = findRoot(indexB);
             if (rootA == rootB)
                 return false;
             else
@@ -45,7 +45,7 @@ class UnionFind
                 m_sets[byHeight.first] = m_sets[byHeight.second];
                 if (m_heights[byHeight.first] == m_heights[byHeight.second])
                     ++m_heights[byHeight.second];
-                --m_setCount;
+                --m_size;
                 return true;
             }
         }
@@ -78,7 +78,7 @@ class Condenser
         };
 
         const adjlist_t& m_edges;
-        UnionFind& m_components;
+        DisjointSets& m_components;
         std::unordered_map<int, VertexInfo> m_info;
         std::stack<int> m_stack;
 
@@ -103,7 +103,7 @@ class Condenser
             {
                 for (int i = m_stack.size(); --i >= vinfo.stackIndex;)
                 {
-                    m_components.join(m_stack.top(), v);
+                    m_components.joinSets(m_stack.top(), v);
                     m_info.at(m_stack.top()).onStack = false;
                     m_stack.pop();
                 }
@@ -111,7 +111,7 @@ class Condenser
         }
 
     public:
-        Condenser(const adjlist_t& edges, UnionFind& components, int vertexCount):
+        Condenser(const adjlist_t& edges, DisjointSets& components, int vertexCount):
             m_edges(edges), m_components(components), m_info(vertexCount) {}
 
         void operator()()
@@ -128,7 +128,7 @@ int edgesRequired(int edgeCount, int vertexCount)
 {
     constexpr unsigned char k_hasFrom = 1, k_hasTo = 2;
     adjlist_t edges(adjList(edgeCount, vertexCount));
-    UnionFind components(vertexCount);
+    DisjointSets components(vertexCount);
     Condenser(edges, components, vertexCount)();
     int componentCount = components.size() - 1;
     if (componentCount < 2)
